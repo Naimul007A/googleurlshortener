@@ -1,17 +1,14 @@
 <?php
-
 namespace App\Traits;
 
 use App\Models\Link;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Str;
-use Psr\Http\Message\ResponseInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
-trait LinkTrait
-{
+trait LinkTrait {
     /**
      * Store the Link.
      *
@@ -19,8 +16,7 @@ trait LinkTrait
      * @return Link
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function linkStore(Request $request)
-    {
+    protected function linkStore(Request $request) {
         return $this->model($request, new Link, $request->input('url'), 0);
     }
 
@@ -31,8 +27,7 @@ trait LinkTrait
      * @return array
      * @throws GuzzleException
      */
-    protected function linksStore(Request $request)
-    {
+    protected function linksStore(Request $request) {
         $urls = preg_split('/\n|\r/', $request->input('urls'), -1, PREG_SPLIT_NO_EMPTY);
 
         $data = [];
@@ -51,8 +46,7 @@ trait LinkTrait
      * @return Link
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function linkUpdate(Request $request, Link $link)
-    {
+    protected function linkUpdate(Request $request, Link $link) {
         return $this->model($request, $link, $request->input('url'), 1);
     }
 
@@ -66,22 +60,21 @@ trait LinkTrait
      * @return Link
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function model(Request $request, Link $link, $url, int $type)
-    {
+    private function model(Request $request, Link $link, $url, int $type) {
         $metadata = $this->parseUrl($url);
 
         if ($url) {
-            $link->url = $url;
-            $link->title = !empty($metadata) && isset($metadata['title']) ? trim(Str::limit($metadata['title'], 128)) : null;
-            $link->description = !empty($metadata) && isset($metadata['description']) ? trim(Str::limit($metadata['description'], 512)) : null;
-            $link->image = !empty($metadata) && isset($metadata['og:image']) ? trim($metadata['og:image']) : null;
+            $link->url         = $url;
+            $link->title       = ! empty($metadata) && isset($metadata['title']) ? trim(Str::limit($metadata['title'], 128)) : null;
+            $link->description = ! empty($metadata) && isset($metadata['description']) ? trim(Str::limit($metadata['description'], 512)) : null;
+            $link->image       = ! empty($metadata) && isset($metadata['og:image']) ? trim($metadata['og:image']) : null;
         }
 
         if ($type == 0) {
             $link->user_id = ($request->user()->id ?? 0);
-            $link->alias = $request->input('alias') ?? $this->generateAlias();
+            $link->alias   = $request->input('alias') ?? $this->generateAlias();
         } else {
-            if ($request->has('alias') && !$request->input('multiple_links')) {
+            if ($request->has('alias') && ! $request->input('multiple_links')) {
                 $link->alias = $request->input('alias');
             }
         }
@@ -133,7 +126,7 @@ trait LinkTrait
         }
 
         if ($request->has('targets')) {
-            $link->targets = array_filter(is_array($request->input('targets')) ? $request->input('targets') : [], function($item) { return isset($item['value']); });
+            $link->targets = array_filter(is_array($request->input('targets')) ? $request->input('targets') : [], function ($item) {return isset($item['value']);});
         }
 
         $link->save();
@@ -150,17 +143,16 @@ trait LinkTrait
      *
      * @return string|null
      */
-    private function generateAlias()
-    {
-        $alias = null;
+    private function generateAlias() {
+        $alias  = null;
         $unique = false;
-        $fails = 0;
+        $fails  = 0;
 
-        while (!$unique) {
+        while (! $unique) {
             $alias = $this->generateString(5 + $fails);
 
             // Check if the alias exists
-            if(!Link::where('alias', '=', $alias)->exists()) {
+            if (! Link::where('alias', '=', $alias)->exists()) {
                 $unique = true;
             }
 
@@ -177,9 +169,9 @@ trait LinkTrait
      * @return string
      */
     private function generateString($length = 10) {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
+        $characters       = '0123456789abcdefghijklmnopqrstuvwxyz';
         $charactersLength = strlen($characters);
-        $randomString = '';
+        $randomString     = '';
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
@@ -193,29 +185,28 @@ trait LinkTrait
      * @return array
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    private function parseUrl($url)
-    {
+    private function parseUrl($url) {
         $metadata = [];
 
         $httpClient = new HttpClient();
 
         try {
             $content = $httpClient->request('GET', $url, [
-                'version' => config('settings.request_http_version'),
-                'proxy' => [
-                    'http' => getRequestProxy(),
-                    'https' => getRequestProxy()
+                'version'     => config('settings.request_http_version'),
+                'proxy'       => [
+                    'http'  => getRequestProxy(),
+                    'https' => getRequestProxy(),
                 ],
-                'timeout' => config('settings.request_timeout'),
+                'timeout'     => config('settings.request_timeout'),
                 'http_errors' => false,
-                'headers' => [
-                    'User-Agent' => config('settings.request_user_agent')
-                ]
+                'headers'     => [
+                    'User-Agent' => config('settings.request_user_agent'),
+                ],
             ]);
 
             $headerType = $content->getHeader('content-type');
-            $parsed = \GuzzleHttp\Psr7\Header::parse($headerType);
-            $metadata = $this->formatMetaTags(mb_convert_encoding($content->getBody(), 'UTF-8', in_array($parsed[0]['charset'], mb_list_encodings()) ? $parsed[0]['charset'] : ($parsed[0]['charset'] == 'MS949' && in_array('UHC', mb_list_encodings()) ? 'CP949' : 'UTF-8')));
+            $parsed     = \GuzzleHttp\Psr7\Header::parse($headerType);
+            $metadata   = $this->formatMetaTags(mb_convert_encoding($content->getBody(), 'UTF-8', in_array($parsed[0]['charset'], mb_list_encodings()) ? $parsed[0]['charset'] : ($parsed[0]['charset'] == 'MS949' && in_array('UHC', mb_list_encodings()) ? 'CP949' : 'UTF-8')));
         } catch (\Exception $e) {
         }
 
@@ -228,29 +219,28 @@ trait LinkTrait
      * @param $value
      * @return array|false
      */
-    public function formatMetaTags($value)
-    {
+    public function formatMetaTags($value) {
         $array = [];
 
         // Match the meta tags
         $pattern = '
             ~<\s*meta\s
-        
+
             # using lookahead to capture type to $1
             (?=[^>]*?
             \b(?:name|property|http-equiv)\s*=\s*
             (?|"\s*([^"]*?)\s*"|\'\s*([^\']*?)\s*\'|
             ([^"\'>]*?)(?=\s*/?\s*>|\s\w+\s*=))
             )
-        
+
             # capture content to $2
             [^>]*?\bcontent\s*=\s*
             (?|"\s*([^"]*?)\s*"|\'\s*([^\']*?)\s*\'|
             ([^"\'>]*?)(?=\s*/?\s*>|\s\w+\s*=))
             [^>]*>
-        
+
             ~ix';
-        if(preg_match_all($pattern, $value, $out)) {
+        if (preg_match_all($pattern, $value, $out)) {
             $array = array_combine(array_map('strtolower', $out[1]), $out[2]);
         }
 
@@ -258,6 +248,10 @@ trait LinkTrait
         preg_match("/<title[^>]*>(.*?)<\/title>/is", $value, $title);
         $array['title'] = $title[1];
 
+        // Use og:title if available and not empty
+        if (! empty($array['og:title'])) {
+            $array['title'] = $array['og:title'];
+        }
         // Return the result
         return $array;
     }
