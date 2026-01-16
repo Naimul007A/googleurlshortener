@@ -252,6 +252,9 @@ trait LinkTrait {
         if (! empty($array['og:title'])) {
             $array['title'] = $array['og:title'];
         }
+        if (! empty($array['og:description'])) {
+            $array['description'] = $array['og:description'];
+        }
         // Return the result
         return $array;
     }
