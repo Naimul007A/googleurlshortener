@@ -1,18 +1,16 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use App\Models\Domain;
 use App\Http\Requests\ValidateLinkRedirectPasswordRequest;
+use App\Models\Domain;
 use App\Models\Link;
+use GeoIp2\Database\Reader as GeoIP;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use GeoIp2\Database\Reader as GeoIP;
 use Illuminate\Support\Facades\DB;
 use WhichBrowser\Parser as UserAgent;
 
-class RedirectController extends Controller
-{
+class RedirectController extends Controller {
     /**
      * Handle the Redirect.
      *
@@ -20,8 +18,7 @@ class RedirectController extends Controller
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
      */
-    public function index(Request $request, $id)
-    {
+    public function index(Request $request, $id) {
         // Get the local host
         $local = parse_url(config('app.url'))['host'];
 
@@ -49,9 +46,9 @@ class RedirectController extends Controller
             // If the link contains banned words
             $bannedWords = preg_split('/\n|\r/', config('settings.bad_words'), -1, PREG_SPLIT_NO_EMPTY);
 
-            foreach($bannedWords as $word) {
+            foreach ($bannedWords as $word) {
                 // Search for the word in string
-                if(strpos(mb_strtolower($link->url), mb_strtolower($word)) !== false) {
+                if (strpos(mb_strtolower($link->url), mb_strtolower($word)) !== false) {
                     return view('redirect.banned', ['link' => $link]);
                 }
             }
@@ -62,7 +59,7 @@ class RedirectController extends Controller
             if ($link->redirect_password && $request->session()->get('verified_link') != $link->id) {
                 // Cache the referrer
                 $request->session()->put('referrer' . $link->id, $referrer);
-            } elseif($link->redirect_password && $request->session()->get('verified_link') == $link->id) {
+            } elseif ($link->redirect_password && $request->session()->get('verified_link') == $link->id) {
                 // Retrieve the cached referrer
                 $referrer = $request->session()->get('referrer' . $link->id);
 
@@ -92,7 +89,7 @@ class RedirectController extends Controller
             $now = Carbon::now();
 
             // If the link is not in the active period
-            if($link->active_period_start_at && $link->active_period_end_at && !$now->isBetween($link->active_period_start_at, $link->active_period_end_at)) {
+            if ($link->active_period_start_at && $link->active_period_end_at && ! $now->isBetween($link->active_period_start_at, $link->active_period_end_at)) {
                 // If the link has an expiration url
                 if ($link->expiration_url) {
                     return redirect()->to($link->expiration_url, 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -154,17 +151,46 @@ class RedirectController extends Controller
 
             // If the UA is a BOT
             if ($ua->device->type == 'bot') {
-                return redirect()->to($this->urlParamsForward($link->url), 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                // return redirect()->to($this->urlParamsForward($link->url), 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                return view('preview', [
+                    'title'       => $link->title,
+                    'description' => $link->description,
+                    'image'       => $link->image,
+                    'url'         => url($id),
+                ]);
             }
+            // Strickly verify if the UA is a valid browser
+            $ua2         = $request->userAgent();
+            $isSocialBot = collect([
+                'facebookexternalhit',
+                'Facebot',
+                'FB_IAB',
+                'FBAV',
+                'FBAN',
+                'Messenger',
+                'Instagram',
+                'Twitterbot',
+                'WhatsApp',
+            ])->contains(function ($bot) use ($ua2) {
+                return stripos($ua2, $bot) !== false;
+            });
 
+            if ($isSocialBot) {
+                return view('preview', [
+                    'title'       => $link->title,
+                    'description' => $link->description,
+                    'image'       => $link->image,
+                    'url'         => url($id),
+                ]);
+            }
             // Get the user's geolocation
             try {
                 $geoip = (new GeoIP(storage_path('app/geoip/GeoLite2-City.mmdb')))->city($request->ip());
 
                 $continentCode = $geoip->continent->code;
-                $countryCode = $geoip->country->isoCode;
-                $country = $geoip->country->isoCode . ':' . $geoip->country->name;
-                $city = $geoip->country->isoCode . ':' . $geoip->city->name . (isset($geoip->mostSpecificSubdivision->isoCode) ? ', ' . $geoip->mostSpecificSubdivision->isoCode : '');
+                $countryCode   = $geoip->country->isoCode;
+                $country       = $geoip->country->isoCode . ':' . $geoip->country->name;
+                $city          = $geoip->country->isoCode . ':' . $geoip->city->name . (isset($geoip->mostSpecificSubdivision->isoCode) ? ', ' . $geoip->mostSpecificSubdivision->isoCode : '');
             } catch (\Exception $e) {
                 $continentCode = $countryCode = $country = $city = null;
             }
@@ -297,7 +323,7 @@ class RedirectController extends Controller
             // If the link has pixel tracking
             if (count($link->pixels) > 0) {
                 // If the user approved tracking consent
-                if($request->cookie('tracking' . $link->id) == 1) {
+                if ($request->cookie('tracking' . $link->id) == 1) {
                     return view('redirect.redirect', ['link' => $link, 'url' => $url]);
                 }
             }
@@ -329,8 +355,7 @@ class RedirectController extends Controller
      * @param $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function validateRedirectPassword(ValidateLinkRedirectPasswordRequest $request, $id)
-    {
+    public function validateRedirectPassword(ValidateLinkRedirectPasswordRequest $request, $id) {
         session()->flash('verified_link', $id);
         return redirect()->back();
     }
@@ -342,8 +367,7 @@ class RedirectController extends Controller
      * @param $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function validateTrackingConsent(Request $request, $id)
-    {
+    public function validateTrackingConsent(Request $request, $id) {
         return redirect()->back()->withCookie('tracking' . $id, $request->input('tracking') ? 1 : 0, (60 * 24 * 30))->with(['sensitive' . $id => 1, 'verified_link' => $id]);
     }
 
@@ -354,8 +378,7 @@ class RedirectController extends Controller
      * @param $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function validateSensitiveConsent(Request $request, $id)
-    {
+    public function validateSensitiveConsent(Request $request, $id) {
         session()->flash('sensitive' . $id, $request->input('sensitive') ? 1 : 0);
         return redirect()->back()->with(['verified_link' => $id]);
     }
@@ -366,8 +389,7 @@ class RedirectController extends Controller
      * @param $url
      * @return string
      */
-    private function urlParamsForward($url)
-    {
+    private function urlParamsForward($url) {
         $forwardParams = request()->all();
 
         // If additional parameters are present

@@ -12,6 +12,9 @@
 */
 
 // Locale routes
+
+use Illuminate\Support\Facades\Route;
+
 Route::post('/locale', 'LocaleController@updateLocale')->name('locale');
 
 // Remote Redirect routes
