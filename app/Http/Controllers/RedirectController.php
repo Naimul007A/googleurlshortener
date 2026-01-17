@@ -159,23 +159,17 @@ class RedirectController extends Controller {
                     'url'         => url($id),
                 ]);
             }
-            // Strickly verify if the UA is a valid browser
-            $ua2         = $request->userAgent();
-            $isSocialBot = collect([
+            // Check if the UA is a social media crawler (not in-app browser)
+            $ua2             = $request->userAgent();
+            $isSocialCrawler = collect([
                 'facebookexternalhit',
                 'Facebot',
-                'FB_IAB',
-                'FBAV',
-                'FBAN',
-                'Messenger',
-                'Instagram',
                 'Twitterbot',
-                'WhatsApp',
             ])->contains(function ($bot) use ($ua2) {
                 return stripos($ua2, $bot) !== false;
             });
 
-            if ($isSocialBot) {
+            if ($isSocialCrawler) {
                 return view('preview', [
                     'title'       => $link->title,
                     'description' => $link->description,
