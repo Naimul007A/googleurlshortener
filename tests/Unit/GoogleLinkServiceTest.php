@@ -28,7 +28,7 @@ class GoogleLinkServiceTest extends TestCase {
 
         $shortUrl = $service->generate('https://local.test/abc12');
 
-        $this->assertSame('https://share.google/CA4To95pCb6jyNEN4', $shortUrl);
+        $this->assertSame('https://www.google.com/share.google?q=CA4To95pCb6jyNEN4', $shortUrl);
         $this->assertCount(1, $history);
         $this->assertSame('POST', $history[0]['request']->getMethod());
         $this->assertSame('Bearer test-token', $history[0]['request']->getHeaderLine('Authorization'));

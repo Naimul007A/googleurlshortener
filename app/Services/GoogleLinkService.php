@@ -41,11 +41,21 @@ class GoogleLinkService {
                 throw new RuntimeException('Google short link service returned an invalid response.');
             }
 
-            return $shortUrl;
+            return $this->formatGoogleUrl($shortUrl);
         } catch (RuntimeException $exception) {
             throw $exception;
         } catch (\Throwable $exception) {
             throw new RuntimeException('Unable to generate Google short link.', 0, $exception);
         }
+    }
+
+    private function formatGoogleUrl(string $shortUrl): string {
+        $parts = parse_url($shortUrl);
+
+        if (($parts['host'] ?? null) !== 'share.google' || empty($parts['path'])) {
+            return $shortUrl;
+        }
+
+        return 'https://www.google.com/share.google?q=' . ltrim($parts['path'], '/');
     }
 }
