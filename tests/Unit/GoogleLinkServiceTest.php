@@ -24,13 +24,14 @@ class GoogleLinkServiceTest extends TestCase {
 
         $service = new GoogleLinkService(new Client([
             'handler' => $handler,
-        ]), 'http://localhost:3501/api/v1/shortlink');
+        ]), 'http://localhost:3501/api/v1/shortlink', 'test-token');
 
         $shortUrl = $service->generate('https://local.test/abc12');
 
         $this->assertSame('https://share.google/CA4To95pCb6jyNEN4', $shortUrl);
         $this->assertCount(1, $history);
         $this->assertSame('POST', $history[0]['request']->getMethod());
+        $this->assertSame('Bearer test-token', $history[0]['request']->getHeaderLine('Authorization'));
         $this->assertSame(
             ['long_url' => 'https://local.test/abc12'],
             json_decode((string) $history[0]['request']->getBody(), true, 512, JSON_THROW_ON_ERROR)
@@ -42,7 +43,7 @@ class GoogleLinkServiceTest extends TestCase {
             'handler' => HandlerStack::create(new MockHandler([
                 new Response(502),
             ])),
-        ]), 'http://localhost:3501/api/v1/shortlink');
+        ]), 'http://localhost:3501/api/v1/shortlink', 'test-token');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('returned HTTP 502');
@@ -55,7 +56,7 @@ class GoogleLinkServiceTest extends TestCase {
             'handler' => HandlerStack::create(new MockHandler([
                 new Response(200, [], '{"data":{}}'),
             ])),
-        ]), 'http://localhost:3501/api/v1/shortlink');
+        ]), 'http://localhost:3501/api/v1/shortlink', 'test-token');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('invalid response');

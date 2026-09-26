@@ -7,7 +7,8 @@ use RuntimeException;
 class GoogleLinkService {
     public function __construct(
         private readonly HttpClient $httpClient,
-        private readonly ?string $endpoint = null
+        private readonly ?string $endpoint = null,
+        private readonly ?string $token = null
     ) {
     }
 
@@ -21,6 +22,10 @@ class GoogleLinkService {
             $response = $this->httpClient->post($this->endpoint ?? config('services.google_link.endpoint'), [
                 'json'        => [
                     'long_url' => $longUrl,
+                ],
+                'headers'     => [
+                    'Authorization' => 'Bearer ' . ($this->token ?? config('services.google_link.token')),
+                    'Accept'        => 'application/json',
                 ],
                 'http_errors' => false,
             ]);

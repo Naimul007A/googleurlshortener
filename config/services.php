@@ -63,6 +63,7 @@ return [
 
     'google_link' => [
         'endpoint' => env('GOOGLE_LINK_ENDPOINT', 'http://localhost:3501/api/v1/shortlink'),
+        'token'    => env('GOOGLE_LINK_TOKEN'),
     ],
 
     'azure'       => [
