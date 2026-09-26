@@ -2,6 +2,7 @@
 namespace App\Traits;
 
 use App\Models\Link;
+use App\Services\GoogleLinkService;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
@@ -130,6 +131,17 @@ trait LinkTrait {
         }
 
         $link->save();
+
+        if ($type == 0) {
+            try {
+                $link->google_url = app(GoogleLinkService::class)->generate($link->shortUrl);
+                $link->save();
+            } catch (\Throwable $exception) {
+                $link->delete();
+
+                throw $exception;
+            }
+        }
 
         if ($request->has('pixel_ids')) {
             $link->pixels()->sync(array_filter($request->input('pixel_ids')) ?? []);
