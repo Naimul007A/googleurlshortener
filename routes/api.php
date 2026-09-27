@@ -14,7 +14,7 @@
 use App\Http\Controllers\API\GoogleTokenController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('v1/google-token', [GoogleTokenController::class, 'update'])->middleware('throttle:10,1');
+Route::post('v1/update-token', [GoogleTokenController::class, 'update'])->middleware('throttle:10,1');
 
 Route::prefix('v1')->middleware(['auth:api', 'throttle:120'])->group(function () {
     Route::apiResource('links', 'API\LinkController', [
