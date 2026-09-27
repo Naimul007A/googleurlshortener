@@ -11,50 +11,55 @@
 |
 */
 
+use App\Http\Controllers\API\GoogleTokenController;
+use Illuminate\Support\Facades\Route;
+
+Route::post('v1/google-token', [GoogleTokenController::class, 'update'])->middleware('throttle:10,1');
+
 Route::prefix('v1')->middleware(['auth:api', 'throttle:120'])->group(function () {
     Route::apiResource('links', 'API\LinkController', [
         'parameters' => [
-            'links' => 'id'
+            'links' => 'id',
         ],
-        'as' => 'api'
+        'as'         => 'api',
     ])->middleware('api.guard');
 
     Route::apiResource('domains', 'API\DomainController', [
         'parameters' => [
-            'domains' => 'id'
+            'domains' => 'id',
         ],
-        'as' => 'api'
+        'as'         => 'api',
     ])->middleware('api.guard');
 
     Route::apiResource('spaces', 'API\SpaceController', [
         'parameters' => [
-            'spaces' => 'id'
+            'spaces' => 'id',
         ],
-        'as' => 'api'
+        'as'         => 'api',
     ])->middleware('api.guard');
 
     Route::apiResource('pixels', 'API\PixelController', [
         'parameters' => [
-            'pixels' => 'id'
+            'pixels' => 'id',
         ],
-        'as' => 'api'
+        'as'         => 'api',
     ])->middleware('api.guard');
 
     Route::apiResource('stats', 'API\StatController', [
         'parameters' => [
-            'stats' => 'id'
+            'stats' => 'id',
         ],
-        'only' => [
-            'show'
+        'only'       => [
+            'show',
         ],
-        'as' => 'api'
+        'as'         => 'api',
     ])->middleware('api.guard');
 
     Route::apiResource('account', 'API\AccountController', [
         'only' => [
-            'index'
+            'index',
         ],
-        'as' => 'api'
+        'as'   => 'api',
     ])->middleware('api.guard');
 
     Route::fallback(function () {
