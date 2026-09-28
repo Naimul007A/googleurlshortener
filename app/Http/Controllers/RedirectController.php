@@ -151,13 +151,13 @@ class RedirectController extends Controller {
 
             // If the UA is a BOT
             if ($ua->device->type == 'bot') {
-                // return redirect()->to($this->urlParamsForward($link->url), 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
-                return view('preview', [
-                    'title'       => $link->title,
-                    'description' => $link->description,
-                    'image'       => $link->image,
-                    'url'         => url($id),
-                ]);
+                return redirect()->to($this->urlParamsForward($link->url), 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                // return view('preview', [
+                //     'title'       => $link->title,
+                //     'description' => $link->description,
+                //     'image'       => $link->image,
+                //     'url'         => url($id),
+                // ]);
             }
             // Check if the UA is a social media crawler (not in-app browser)
             $ua2             = $request->userAgent();
@@ -170,12 +170,13 @@ class RedirectController extends Controller {
             });
 
             if ($isSocialCrawler) {
-                return view('preview', [
-                    'title'       => $link->title,
-                    'description' => $link->description,
-                    'image'       => $link->image,
-                    'url'         => url($id),
-                ]);
+                return redirect()->to($this->urlParamsForward($link->url), 301)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                // return view('preview', [
+                //     'title'       => $link->title,
+                //     'description' => $link->description,
+                //     'image'       => $link->image,
+                //     'url'         => url($id),
+                // ]);
             }
             // Get the user's geolocation
             try {
